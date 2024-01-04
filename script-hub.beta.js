@@ -840,7 +840,7 @@ const htmls = `
 
       <div style=" margin-top: 30px;">
       <!--<code>输入类型:</code> -->
-        <span v-for="item in inputTypes">
+        <span style="position: relative; top: -9px;" v-for="item in inputTypes">
             <input type="radio" :id="'input-type-' + item.value" :value="item.value" v-model.lazy="inputType" :disabled="item.disabled"/>
             <label :for="'input-type-' + item.value" class="radio-label">{{item.label}}</label>
         </span>
@@ -897,7 +897,7 @@ const htmls = `
           <small> &#9432; <a href="https://github.com/Script-Hub-Org/Script-Hub/wiki/%E6%88%91%E5%BA%94%E8%AF%A5%E6%80%8E%E4%B9%88%E9%80%89%E6%8B%A9%E6%9D%A5%E6%BA%90%E7%B1%BB%E5%9E%8B%E5%92%8C%E7%9B%AE%E6%A0%87%E7%B1%BB%E5%9E%8B#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E8%A6%81%E5%BC%80%E5%90%AF%E8%84%9A%E6%9C%AC%E8%BD%AC%E6%8D%A2" target="_blank">脚本转换 1 和 2 怎么选</a></small>
           <details>
             <summary>启用脚本转换 1</summary>
-            <span>根据关键词为脚本启用脚本转换(多关键词以"+"分隔，主要用途 将使用了QX独有api的脚本转换为通用脚本，谨慎开启，大部分脚本本身就通用，无差别启用，只会徒增功耗)</span>
+            <span>根据关键词为脚本启用脚本转换(多关键词以 <code>+</code> 分隔，主要用途 将使用了QX独有api的脚本转换为通用脚本，谨慎开启，大部分脚本本身就通用，无差别启用，只会徒增功耗)</span>
             <textarea id="jsc" v-model.lazy="jsc" placeholder=""></textarea>
             <div>
               <input type="checkbox" id="jsc_all" v-model.lazy="jsc_all" />
@@ -911,7 +911,7 @@ const htmls = `
 
           <details>
             <summary>启用脚本转换 2</summary>
-            <span>根据关键词为脚本启用脚本转换(与 <code>启用脚本转换 1</code> 的区别: 总是会在$done(body)里包一个response)</span>
+            <span>根据关键词为脚本启用脚本转换(与 <code>启用脚本转换 1</code> 的区别: 总是会在 <code>$done</code><code>(body)</code> 里包一个response)</span>
             <textarea id="jsc2" v-model.lazy="jsc2" placeholder=""></textarea>
             <div>
               <input type="checkbox" id="jsc2_all" v-model.lazy="jsc2_all" />
@@ -929,6 +929,7 @@ const htmls = `
 
     <!-- position: fixed; -->
     <div style="padding: 1rem;bottom: 0rem;margin-right: 0rem;background-color: var(--kbg);/* border: 1px solid var(--border); */border-radius: var(--standard-border-radius);">
+        <span v-if="result" style="color: red">请勿打开链接之后复制浏览器地址栏的链接 浏览器地址栏中的链接可能未编码 可能会导致导入参数异常</span><br/>
         <a v-if="result" :href="result" target="_blank" style="margin: 0 0.5rem 0 0">打开链接</a>
         <a v-if="previewResult" :href="previewResult" target="_blank" style="margin: 0 0.5rem 0 0">预览结果</a>
         <a v-if="result && target === 'shadowrocket-module' " :href=" 'https://api.boxjs.app/shadowrocket/install?module=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Shadowrocket)</a>
@@ -956,7 +957,7 @@ const htmls = `
 
       <details v-if="!target || (!target.endsWith('rule-set') && !target.includes('domain-set') && !target.endsWith('-script') && target !== 'plain-text' )">
         <summary>名称 简介</summary>
-        <span>名字+简介 ，名字和简介以"+"相连，可缺省名字或简介</span>
+        <span>名字+简介 ，名字和简介以 <code>+</code> 相连，可缺省名字或简介</span>
         <textarea id="n" v-model.lazy="n" placeholder=""></textarea>
       </details>
       
@@ -970,12 +971,12 @@ const htmls = `
 
         <details>
           <summary>保留重写</summary>
-          <span>根据关键词保留重写(即去掉注释符#) 多关键词以"+"分隔</span>
+          <span>根据关键词保留重写(即去掉注释符#) 多关键词以 <code>+</code> 分隔</span>
           <textarea id="y" v-model.lazy="y" placeholder=""></textarea>
         </details>
         <details>
           <summary>排除重写</summary>
-          <span>根据关键词排除重写(即添加注释符#) 多关键词以"+"分隔</span>
+          <span>根据关键词排除重写(即添加注释符#) 多关键词以 <code>+</code> 分隔</span>
           <textarea id="x" v-model.lazy="x" placeholder=""></textarea>
         </details>
         <div>
@@ -1000,12 +1001,12 @@ const htmls = `
         <summary>规则相关</summary>
         <details>
           <summary>保留规则</summary>
-          <span>根据关键词保留规则(即去掉注释符#) 多关键词以"+"分隔</span>
+          <span>根据关键词保留规则(即去掉注释符#) 多关键词以 <code>+</code> 分隔</span>
           <textarea id="y" v-model.lazy="y" placeholder=""></textarea>
         </details>
         <details>
           <summary>排除规则</summary>
-          <span>根据关键词排除规则(即添加注释符#) 多关键词以"+"分隔</span>
+          <span>根据关键词排除规则(即添加注释符#) 多关键词以 <code>+</code> 分隔</span>
           <textarea id="x" v-model.lazy="x" placeholder=""></textarea>
         </details>
       </details>
@@ -1015,31 +1016,47 @@ const htmls = `
 
 
       <details v-if="!target || (!target.endsWith('rule-set') && !target.includes('domain-set') && !target.endsWith('-script') && target !== 'plain-text' )">
-        <summary>修改 MITM 主机名</summary>
+        <summary>修改 MitM 主机名</summary>
         <details>
-          <summary>添加 MITM 主机名</summary>
-          <span>添加 MITM 主机名 多主机名以","分隔</span>
+          <summary>添加 MitM 主机名</summary>
+          <span>添加 MitM 主机名 多主机名以 <code>,</code> 分隔</span>
           <textarea id="hnadd" v-model.lazy="hnadd" placeholder=""></textarea>
         </details>
 
         <details>
-          <summary>删除 MITM 主机名</summary>
-          <span>从已有MITM主机名中删除主机名 多主机名以","分隔(需要传入完整主机名)</span>
+          <summary>删除 MitM 主机名</summary>
+          <span>1. 从已有 MitM 主机名中删除主机名 多主机名以 <code>,</code> 分隔(需要传入完整主机名)</span>
           <textarea id="hndel" v-model.lazy="hndel" placeholder=""></textarea>
+          <span>2. 使用 <code>正则表达式</code> 从已有 MitM 主机名中删除主机名</span>
+          <textarea id="hnregdel" v-model.lazy="hnregdel" placeholder=""></textarea>
         </details>
       </details>
       
 
       <details v-if="!target || (!target.endsWith('rule-set') && !target.includes('domain-set') && !target.endsWith('-script') && target !== 'plain-text' )">
+        <summary>修改脚本名</summary>
+        <details>
+          <summary>关键词锁定脚本(njsnametarget)</summary>
+          <span>根据关键词锁定脚本, 配合参数 <code>njsname</code> 修改脚本名. 多关键词用 <code>+</code> 分隔, <code>njsnametarget</code> 传入了几项,  <code>njsname</code> 也必须对应传入几项</span>
+          <textarea id="njsnametarget" v-model.lazy="njsnametarget" placeholder=""></textarea>
+        </details>
+        <details>
+          <summary>新的脚本名(njsname)</summary>
+          <span>见 <code>njsnametarget</code> 参数说明</span>
+          <textarea id="njsname" v-model.lazy="njsname" placeholder=""></textarea>
+        </details>
+      </details>
+
+      <details v-if="!target || (!target.endsWith('rule-set') && !target.includes('domain-set') && !target.endsWith('-script') && target !== 'plain-text' )">
         <summary>修改定时任务</summary>
         <details>
           <summary>修改定时任务(cron)</summary>
-          <span>根据关键词锁定cron脚本配合参数cronexp= 修改定时任务的cron表达式 多关键词用"+"分隔，cron=传入了几项，cronexp=也必须对应传入几项。 cron表达式中空格可用"."或"%20"替代</span>
+          <span>根据关键词锁定 <code>cron</code> 脚本配合参数 <code>cronexp</code> 修改定时任务的cron表达式 多关键词用 <code>+</code> 分隔, <code>cron</code> 传入了几项, <code>cronexp</code> 也必须对应传入几项。 cron 表达式中空格可用 "." 或 "%20" 替代</span>
           <textarea id="cron" v-model.lazy="cron" placeholder=""></textarea>
         </details>
         <details>
           <summary>修改定时任务(cronexp)</summary>
-          <span>见 cron= 参数说明</span>
+          <span>见 <code>cron</code> 参数说明</span>
           <textarea id="cronexp" v-model.lazy="cronexp" placeholder=""></textarea>
         </details>
       </details>
@@ -1049,7 +1066,7 @@ const htmls = `
         <summary>修改参数</summary>
         <details>
           <summary>修改参数(arg)</summary>
-          <span>arg= 根据关键词锁定脚本配合参数argv= 修改argument=的值 多关键词用"+"分隔，arg=传入了几项，argv=也必须对应传入几项。 argument中 "+"必须用"t;add;"替代。</span>
+          <span>arg= 根据关键词锁定脚本配合参数argv= 修改argument=的值 多关键词用 <code>+</code> 分隔，arg=传入了几项，argv=也必须对应传入几项。 argument中  <code>+</code> 必须用"t;add;"替代。</span>
           <textarea id="arg" v-model.lazy="arg" placeholder=""></textarea>
         </details>
         <details>
@@ -1090,13 +1107,13 @@ const htmls = `
 
       <details v-if="!target || target.startsWith('surge') ">
         <summary>SNI 扩展匹配(extended-matching)</summary>
-        <span>根据关键词开启 Surge 的 SNI 扩展匹配(extended-matching) 多关键词以"+"分隔</span>
+        <span>根据关键词开启 Surge 的 SNI 扩展匹配(extended-matching) 多关键词以 <code>+</code> 分隔</span>
         <textarea id="sni" v-model.lazy="sni" placeholder=""></textarea>
       </details>
 
       <div v-if="!target || target.endsWith('-script') ">
         <input type="checkbox" id="wrap_response" v-model.lazy="wrap_response" />
-        <label class="button-over" for="wrap_response">总是会在 $done(body) 里包一个 response</label>
+        <label class="button-over" for="wrap_response">总是会在 <code>$done</code><code>(body)</code> 里包一个 response</label>
       </div>
 
       <div v-if="!target || target.endsWith('-script') ">
@@ -1140,7 +1157,7 @@ const htmls = `
 
     </div>
     <footer>
-      <p>Made With &hearts; By <a href="https://github.com/Script-Hub-Org/Script-Hub">Script Hub v1.14.6</a></p>
+      <p>Made With &hearts; By <a href="https://github.com/Script-Hub-Org/Script-Hub">Script Hub v1.14.7</a></p>
     </footer>
     <script>
       const openAllDetails = () => document.querySelectorAll('details').forEach(i => i.setAttribute('open', ""))
@@ -1164,12 +1181,15 @@ const htmls = `
     del: true,
     hnadd: '',
     hndel: '',
+    hnregdel: '',
     jsc: '',
     jsc_all: '',
     jsc2: '',
     jsc2_all: '',
     cron: '',
     cronexp: '',
+    njsname: '',
+    njsnametarget: '',
     arg: '',
     argv: '',
     tiles: '',
@@ -1204,7 +1224,7 @@ const htmls = `
     init.target = 'shadowrocket-module'
   }
 
-  const params = [ 'n', 'type', 'target', 'x', 'y', 'hnadd', 'hndel', 'jsc', 'jsc2', 'cron', 'cronexp', 'arg', 'argv', 'tiles', 'tcolor', 'cachexp', 'nocache', 'del', 'nore', 'synMitm', 'noNtf', 'wrap_response', 'compatibilityOnly', 'evalScriptori', 'evalScriptmodi', 'evalUrlmodi', 'evalUrlori', 'keepHeader', 'jsDelivr', 'sni', 'localtext']
+  const params = [ 'n', 'type', 'target', 'x', 'y', 'hnadd', 'hndel', 'hnregdel', 'jsc', 'jsc2', 'cron', 'cronexp', 'njsname', 'njsnametarget', 'arg', 'argv', 'tiles', 'tcolor', 'cachexp', 'nocache', 'del', 'nore', 'synMitm', 'noNtf', 'wrap_response', 'compatibilityOnly', 'evalScriptori', 'evalScriptmodi', 'evalUrlmodi', 'evalUrlori', 'keepHeader', 'jsDelivr', 'sni', 'localtext']
   
   init.editMode = location.pathname.indexOf('/edit') === 0
 

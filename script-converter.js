@@ -152,6 +152,18 @@ var $task = {
 }
 
 var $prefs = {
+  removeValueForKey: key => {
+    let result
+    try {
+      result = $persistentStore.write('', key)
+    } catch (e) {
+    }
+    try {
+      result = $persistentStore.write(null, key)
+    } catch (e) {
+    }
+    return result
+  },
   valueForKey: key => {
     return $persistentStore.read(key)
   },

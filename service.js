@@ -13,13 +13,15 @@ const BETA_BASE_URL = process.env.BETA_BASE_URL || `http://127.0.0.1:${BETA_PORT
 
 const scriptMap = {
   './script-hub.js': /^https?:\/\/script\.hub\/($|edit\/|reload)/,
-  './Rewrite-Parser.js': /^https?:\/\/script\.hub\/file\/_start_\/.+type=(qx-rewrite|loon-plugin|surge-module|all-module)/,
+  './Rewrite-Parser.js':
+    /^https?:\/\/script\.hub\/file\/_start_\/.+type=(qx-rewrite|loon-plugin|surge-module|all-module)/,
   './rule-parser.js': /^https?:\/\/script\.hub\/file\/_start_\/.+type=rule-set/,
   './script-converter.js': /^https?:\/\/script\.hub\/convert\//,
 }
 const scriptMapBeta = {
   './script-hub.beta.js': /^https?:\/\/script\.hub\/($|edit\/|reload)/,
-  './Rewrite-Parser.beta.js': /^https?:\/\/script\.hub\/file\/_start_\/.+type=(qx-rewrite|loon-plugin|surge-module|all-module)/,
+  './Rewrite-Parser.beta.js':
+    /^https?:\/\/script\.hub\/file\/_start_\/.+type=(qx-rewrite|loon-plugin|surge-module|all-module)/,
   './rule-parser.beta.js': /^https?:\/\/script\.hub\/file\/_start_\/.+type=rule-set/,
   './script-converter.beta.js': /^https?:\/\/script\.hub\/convert\//,
 }
@@ -91,7 +93,7 @@ const reqFn = async ({ ctx, scriptMap, baseUrl }) => {
   }
   const result = await evalFn({ $request, scriptFilePath })
   // console.log(`result`, result)
-  ctx.response.status = result?.response?.status
+  ctx.response.status = Number(result?.response?.status || 200)
   for (const [k, v] of Object.entries(result?.response?.headers)) {
     // if (!/^content-length|content-encoding$/i.test(k)) {
     ctx.set(k, v)
