@@ -890,7 +890,41 @@ const htmls = `
       
     </details>
 
-    <template v-if="!target || !type || (!target.endsWith('rule-set') && !target.includes('domain-set') && !target.endsWith('-script') && target !== 'plain-text' )">
+    <!-- position: fixed; -->
+    <div style="padding: 1rem;bottom: 0rem;margin-right: 0rem;background-color: var(--kbg);/* border: 1px solid var(--border); */border-radius: var(--standard-border-radius);">
+        <span v-if="result" style="color: red">请勿打开链接之后复制浏览器地址栏的链接 浏览器地址栏中的链接可能未编码 可能会导致导入参数异常</span><br/>
+        <a v-if="result" :href="result" target="_blank" style="margin: 0 0.5rem 0 0">打开链接</a>
+        <a v-if="previewResult" :href="previewResult" target="_blank" style="margin: 0 0.5rem 0 0">预览结果</a>
+        <a v-if="result && target === 'shadowrocket-module' " :href=" 'https://api.boxjs.app/shadowrocket/install?module=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Shadowrocket)</a>
+        <a v-if="result && target === 'loon-plugin' " :href=" 'https://www.nsloon.com/openloon/import?plugin=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Loon)</a>
+        <a v-if="result && target === 'stash-stoverride' " :href=" 'stash://install-override?url=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Stash)</a>
+        <template v-if="result && target === 'surge-module' ">
+          <a :href=" 'scriptable:///run/SurgeModuleTool?url=' + encodeURIComponent(result) + '&name=' + encodeURIComponent(filename) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Surge)</a>
+          <small>&#9432; <a href="https://github.com/Script-Hub-Org/Script-Hub/wiki/%E7%9B%B8%E5%85%B3%E7%94%9F%E6%80%81:-Surge-%E6%A8%A1%E5%9D%97%E5%B7%A5%E5%85%B7" target="_blank">如何导入</a></small>
+        </template>
+        <template v-if="result">
+          <br/>
+          <small>&#9432; 将此链接中的 <code>file</code> 或 <code>convert</code> 改为 <code>edit</code> 即可在浏览器中再次对当前内容进行编辑</small>
+        </template>
+        <textarea v-if="frontendConvert" id="frontendConvertResult" :value="frontendConvertResult" placeholder="结果" readonly></textarea>
+        <textarea v-else id="result" :value="result" placeholder="结果(请输入来源链接并选择类型)" readonly></textarea>
+        <div>
+          <input type="checkbox" id="frontendConvert" v-model.lazy="frontendConvert" :disabled="frontendConvertDisabled"/>
+          <label class="button-over" for="frontendConvert">开启纯前端转换</label>
+          <br/>
+          <small>使用限制: 1. 使用网页部署前端 2. 使用 <code>本地文本内容</code> 3. 转换类型为 <code>重写/模块/覆写/插件 </code> 4. 不会进行内部的 <code>脚本转换</code> 5. 不会进行网络请求 例: 无法使用 <code>可莉图标订阅</code> 但是可以使用完整图标文件链接</small>
+        </div>
+        <button v-if="copyInfo">{{copyInfo}}</button>
+        <button v-else @click="copy" :disabled="!result">复制</button>
+            <!-- <button v-else @click="copy">全选{{isHttps ? "&复制" : ""}}</button> -->
+            <!-- <small v-if="!isHttps"> https://script.hub 可复制</small> -->
+            &nbsp;&nbsp;
+            <button v-if="resetInfo">{{resetInfo}}</button>
+            <button v-else @click="reset">重置</button>
+      </div>
+      <br/>
+
+      <template v-if="!target || !type || (!target.endsWith('rule-set') && !target.includes('domain-set') && !target.endsWith('-script') && target !== 'plain-text' )">
         <small style=" position: relative; top: -4px;">&nbsp;&#9432; <a href="https://github.com/Script-Hub-Org/Script-Hub/wiki/%E6%88%91%E5%BA%94%E8%AF%A5%E6%80%8E%E4%B9%88%E9%80%89%E6%8B%A9%E6%9D%A5%E6%BA%90%E7%B1%BB%E5%9E%8B%E5%92%8C%E7%9B%AE%E6%A0%87%E7%B1%BB%E5%9E%8B#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E8%A6%81%E5%BC%80%E5%90%AF%E8%84%9A%E6%9C%AC%E8%BD%AC%E6%8D%A2" target="_blank">什么时候应该启用脚本转换</a></small>
         <details>
           <summary>启用脚本转换</summary>
@@ -925,45 +959,26 @@ const htmls = `
         </details>
       </template>
 
-
-
-    <!-- position: fixed; -->
-    <div style="padding: 1rem;bottom: 0rem;margin-right: 0rem;background-color: var(--kbg);/* border: 1px solid var(--border); */border-radius: var(--standard-border-radius);">
-        <span v-if="result" style="color: red">请勿打开链接之后复制浏览器地址栏的链接 浏览器地址栏中的链接可能未编码 可能会导致导入参数异常</span><br/>
-        <a v-if="result" :href="result" target="_blank" style="margin: 0 0.5rem 0 0">打开链接</a>
-        <a v-if="previewResult" :href="previewResult" target="_blank" style="margin: 0 0.5rem 0 0">预览结果</a>
-        <a v-if="result && target === 'shadowrocket-module' " :href=" 'https://api.boxjs.app/shadowrocket/install?module=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Shadowrocket)</a>
-        <a v-if="result && target === 'loon-plugin' " :href=" 'https://www.nsloon.com/openloon/import?plugin=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Loon)</a>
-        <a v-if="result && target === 'stash-stoverride' " :href=" 'stash://install-override?url=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Stash)</a>
-        <template v-if="result && target === 'surge-module' ">
-          <a :href=" 'scriptable:///run/SurgeModuleTool?url=' + encodeURIComponent(result) + '&name=' + encodeURIComponent(filename) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Surge)</a>
-          <small>&#9432; <a href="https://github.com/Script-Hub-Org/Script-Hub/wiki/%E7%9B%B8%E5%85%B3%E7%94%9F%E6%80%81:-Surge-%E6%A8%A1%E5%9D%97%E5%B7%A5%E5%85%B7" target="_blank">如何导入</a></small>
-        </template>
-        <template v-if="result">
-          <br/>
-          <small>&#9432; 将此链接中的 <code>file</code> 或 <code>convert</code> 改为 <code>edit</code> 即可在浏览器中再次对当前内容进行编辑</small>
-        </template>
-        <textarea id="result" :value="result" placeholder="结果(请输入来源链接并选择类型)" readonly></textarea>
-        
-        <button v-if="copyInfo">{{copyInfo}}</button>
-        <button v-else @click="copy" :disabled="!result">复制</button>
-            <!-- <button v-else @click="copy">全选{{isHttps ? "&复制" : ""}}</button> -->
-            <!-- <small v-if="!isHttps"> https://script.hub 可复制</small> -->
-            &nbsp;&nbsp;
-            <button v-if="resetInfo">{{resetInfo}}</button>
-            <button v-else @click="reset">重置</button>
-      </div>
-      <br/>
-
       <details v-if="!target || (!target.endsWith('rule-set') && !target.includes('domain-set') && !target.endsWith('-script') && target !== 'plain-text' )">
         <summary>名称 简介</summary>
-        <span>名字+简介 ，名字和简介以 <code>+</code> 相连，可缺省名字或简介</span>
+        <span>名字+简介 ，名字和简介以 <code>+</code> 相连，可缺省名字或简介. 名字或简介中想使用 <code>+</code> 请用 <code>➕</code> 代替</span>
         <textarea id="n" v-model.lazy="n" placeholder=""></textarea>
       </details>
       
       <details>
         <summary>文件名(避免重名, 默认从来源取)</summary>
         <textarea id="filename" v-model.lazy="filename" :placeholder=" target === 'plain-text' ? '当前为纯文本类型, 此处为包含后缀的完整文件名' : '不包含后缀' "></textarea>
+      </details>
+
+      <details v-if="!target || (!target.endsWith('rule-set') && !target.includes('domain-set') && !target.endsWith('-script') && target !== 'plain-text' )">
+        <summary>分类</summary>
+        <textarea id="category" v-model.lazy="category" placeholder="指定 category"></textarea>
+      </details>
+
+      <details v-if="!target || (!target.endsWith('rule-set') && !target.includes('domain-set') && !target.endsWith('-script') && target !== 'plain-text' )">
+        <summary>图标</summary>
+        <p>可指定 <a href="https://gitlab.com/lodepuly/iconlibrary/-/raw/main/KeLee_icon.json" target="_blank">可莉图标订阅</a> 里的图标名或图标链接</p>
+        <textarea id="icon" v-model.lazy="icon" placeholder="指定 icon"></textarea>
       </details>
 
       <details v-if="!target || (!target.endsWith('rule-set') && !target.includes('domain-set') && !target.endsWith('-script') && target !== 'plain-text' )">
@@ -1055,7 +1070,7 @@ const htmls = `
         <summary>修改定时任务</summary>
         <details>
           <summary>修改定时任务(cron)</summary>
-          <span>根据关键词锁定 <code>cron</code> 脚本配合参数 <code>cronexp</code> 修改定时任务的cron表达式 多关键词用 <code>+</code> 分隔, <code>cron</code> 传入了几项, <code>cronexp</code> 也必须对应传入几项。 cron 表达式中空格可用 "." 或 "%20" 替代</span>
+          <span>根据关键词锁定 <code>cron</code> 脚本配合参数 <code>cronexp</code> 修改定时任务的cron表达式 多关键词用 <code>+</code> 分隔, <code>cron</code> 传入了几项, <code>cronexp</code> 也必须对应传入几项。 cron 表达式中空格可用 "." 替代</span>
           <textarea id="cron" v-model.lazy="cron" placeholder=""></textarea>
         </details>
         <details>
@@ -1161,7 +1176,7 @@ const htmls = `
 
     </div>
     <footer>
-      <p>Made With &hearts; By <a href="https://github.com/Script-Hub-Org/Script-Hub">Script Hub v1.14.8</a></p>
+      <p>Made With &hearts; By <a href="https://github.com/Script-Hub-Org/Script-Hub">Script Hub v1.14.9</a></p>
     </footer>
     <script>
       const openAllDetails = () => document.querySelectorAll('details').forEach(i => i.setAttribute('open', ""))
@@ -1180,6 +1195,8 @@ const htmls = `
     localtext: '',
     n: '',
     filename: '',
+    category: '',
+    icon: '',
     y: '',
     x: '',
     del: true,
@@ -1207,10 +1224,12 @@ const htmls = `
     evalScriptmodi: '',
     evalUrlori: '',
     evalUrlmodi: '',
+    frontendConvertResult: '',
     keepHeader: false,
     nore: false,
     synMitm: false,
     noNtf: false,
+    frontendConvert: false,
     sni: '',
     wrap_response: false,
     jsDelivr: false,
@@ -1229,7 +1248,7 @@ const htmls = `
     init.target = 'shadowrocket-module'
   }
 
-  const params = [ 'n', 'type', 'target', 'x', 'y', 'hnadd', 'hndel', 'hnregdel', 'jsc', 'jsc2', 'cron', 'cronexp', 'njsname', 'njsnametarget', 'policy', 'arg', 'argv', 'tiles', 'tcolor', 'cachexp', 'nocache', 'del', 'nore', 'synMitm', 'noNtf', 'wrap_response', 'compatibilityOnly', 'evalScriptori', 'evalScriptmodi', 'evalUrlmodi', 'evalUrlori', 'keepHeader', 'jsDelivr', 'sni', 'localtext']
+  const params = [ 'n', 'type', 'target', 'x', 'y', 'hnadd', 'hndel', 'hnregdel', 'jsc', 'jsc2', 'cron', 'cronexp', 'njsname', 'njsnametarget', 'policy', 'arg', 'argv', 'tiles', 'tcolor', 'cachexp', 'nocache', 'del', 'nore', 'synMitm', 'noNtf', 'wrap_response', 'compatibilityOnly', 'evalScriptori', 'evalScriptmodi', 'evalUrlmodi', 'evalUrlori', 'keepHeader', 'jsDelivr', 'sni', 'localtext', 'icon', 'category']
   
   init.editMode = location.pathname.indexOf('/edit') === 0
 
@@ -1242,7 +1261,7 @@ const htmls = `
     if (endArray) {
       const src = endArray[0]
       if(src) {
-        init.src = src
+        init.src = decodeURIComponent(src)
       }
       const filenameStr = endArray[1]
       if(filenameStr) {
@@ -1312,7 +1331,7 @@ const htmls = `
         }, 1000)
       },
       copy(){
-        const copyText = document.getElementById("result");
+        const copyText = document.getElementById(this.frontendConvert ? "frontendConvertResult" : "result");
         copyText.select();
         copyText.setSelectionRange(0, 99999); // For mobile devices
         // navigator.clipboard.writeText(copyText.value);
@@ -1327,6 +1346,28 @@ const htmls = `
       }
     },
     watch: {
+      async result(v) {
+        try {
+          const { scriptMap, rewriteParser, ruleParser } = "__SCRIPT__"
+          let $request = {
+            method: 'GET',
+            headers: {},
+            url: v,
+          }
+          const $notification = {
+            post: (...arg) => {
+              console.log(...arg)
+            }
+          }
+          const $done = res => {
+            console.log(res.response.body)
+            this.frontendConvertResult = res.response.body
+          }
+          eval(rewriteParser)
+        } catch (e) {
+          console.error(e)
+        }
+      },
       type(v) {
         if(v === 'rule-set' && !this.target.endsWith('rule-set')){
           // this.target='rule-set'
@@ -1386,6 +1427,9 @@ const htmls = `
       }
   },
     computed: {
+      frontendConvertDisabled: function () {
+        return !/^Node\.js/i.test(init.env)
+      },
       result: function () {
         if (this.src && this.src.startsWith('https://quantumult.app/x/open-app/add-resource')) {
           return '⚠️⚠️⚠️ 你填入的是 QX 一键导入链接. 请安装 https://t.me/h5683577/211 然后在浏览器中预览资源 分别转换规则集和重写'

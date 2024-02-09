@@ -14,8 +14,14 @@
 https://github.com/Script-Hub-Org/Script-Hub
 ***************************/
 const JS_NAME = 'Script Hub: 重写转换'
-
 const $ = new Env(JS_NAME)
+
+let arg
+if (typeof $argument != 'undefined') {
+  arg = Object.fromEntries($argument.split('&').map(item => item.split('=')))
+} else {
+  arg = {}
+}
 
 const url = $request.url
 const req = url.split(/file\/_start_\//)[1].split(/\/_end_\//)[0]
@@ -41,53 +47,55 @@ const evUrlori = queryObject.evalUrlori
 const evUrlmodi = queryObject.evalUrlmodi
 
 let noNtf = queryObject.noNtf ? istrue(queryObject.noNtf) : false //默认开启通知
-let localsetNtf = $.getdata('ScriptHub通知')
+
+let localsetNtf = $.lodash_get(arg, 'Notify') || $.getval('ScriptHub通知') || ''
 noNtf = localsetNtf == '开启通知' ? false : localsetNtf == '关闭通知' ? true : noNtf
 
-let openInBoxHtml = istrue(queryObject.openInBoxHtml)
-let openOutBoxHtml = istrue(queryObject.openOutBoxHtml)
-let openOtherRuleHtml = istrue(queryObject.openOtherRuleHtml)
+let openMsgHtml = istrue(queryObject.openMsgHtml)
 
-noNtf = openInBoxHtml || openOutBoxHtml || openOtherRuleHtml ? true : noNtf
+noNtf = openMsgHtml ? true : noNtf
 
-let nName = queryObject.n != undefined ? queryObject.n.split('+') : null //名字简介
-let Pin0 = queryObject.y != undefined ? queryObject.y.split('+') : null //保留
-let Pout0 = queryObject.x != undefined ? queryObject.x.split('+') : null //排除
+let nName = queryObject.n != undefined ? getArgArr(queryObject.n) : null //名字简介
+let category = queryObject.category ?? null
+let icon = queryObject.icon ?? null
+let Pin0 = queryObject.y != undefined ? getArgArr(queryObject.y) : null //保留
+let Pout0 = queryObject.x != undefined ? getArgArr(queryObject.x) : null //排除
 let hnAdd = queryObject.hnadd != undefined ? queryObject.hnadd.split(/\s*,\s*/) : null //加
 let hnDel = queryObject.hndel != undefined ? queryObject.hndel.split(/\s*,\s*/) : null //减
 let hnRegDel = queryObject.hnregdel != undefined ? new RegExp(queryObject.hnregdel) : null //正则删除hostname
 let synMitm = istrue(queryObject.synMitm) //将force与mitm同步
 let delNoteSc = istrue(queryObject.del)
-let nCron = queryObject.cron != undefined ? queryObject.cron.split('+') : null //替换cron目标
+let nCron = queryObject.cron != undefined ? getArgArr(queryObject.cron) : null //替换cron目标
 let ncronexp = queryObject.cronexp != undefined ? queryObject.cronexp.replace(/\./g, ' ').split('+') : null //新cronexp
-let nArgTarget = queryObject.arg != undefined ? queryObject.arg.split('+') : null //arg目标
-let nArg = queryObject.argv != undefined ? queryObject.argv.split('+') : null //arg参数
-let nTilesTarget = queryObject.tiles != undefined ? queryObject.tiles.split('+') : null
-let ntilescolor = queryObject.tcolor != undefined ? queryObject.tcolor.split('+') : null
+let nArgTarget = queryObject.arg != undefined ? getArgArr(queryObject.arg) : null //arg目标
+let nArg = queryObject.argv != undefined ? getArgArr(queryObject.argv) : null //arg参数
+let nTilesTarget = queryObject.tiles != undefined ? getArgArr(queryObject.tiles) : null
+let ntilescolor = queryObject.tcolor != undefined ? getArgArr(queryObject.tcolor) : null
 let nPolicy = queryObject.policy != undefined ? queryObject.policy : null
-let njsnametarget = queryObject.njsnametarget != undefined ? queryObject.njsnametarget.split('+') : null //修改脚本名目标
-let njsname = queryObject.njsname != undefined ? queryObject.njsname.split('+') : null //修改脚本名
-let jsConverter = queryObject.jsc != undefined ? queryObject.jsc.split('+') : null //脚本转换1
-let jsConverter2 = queryObject.jsc2 != undefined ? queryObject.jsc2.split('+') : null //脚本转换2
+let njsnametarget = queryObject.njsnametarget != undefined ? getArgArr(queryObject.njsnametarget) : null //修改脚本名目标
+let njsname = queryObject.njsname != undefined ? getArgArr(queryObject.njsname) : null //修改脚本名
+let jsConverter = queryObject.jsc != undefined ? getArgArr(queryObject.jsc) : null //脚本转换1
+let jsConverter2 = queryObject.jsc2 != undefined ? getArgArr(queryObject.jsc2) : null //脚本转换2
 let compatibilityOnly = istrue(queryObject.compatibilityOnly) //兼容转换
 let keepHeader = istrue(queryObject.keepHeader) //保留mock header
 let jsDelivr = istrue(queryObject.jsDelivr) //开启jsDelivr
 let localText = queryObject.localtext != undefined ? '\n' + queryObject.localtext : '' //纯文本输入
 let ipNoResolve = istrue(queryObject.nore) //ip规则不解析域名
-let sni = queryObject.sni != undefined ? queryObject.sni.split('+') : null //sni嗅探
+let sni = queryObject.sni != undefined ? getArgArr(queryObject.sni) : null //sni嗅探
 let sufkeepHeader = keepHeader == true ? '&keepHeader=true' : '' //用于保留header的后缀
 let sufjsDelivr = jsDelivr == true ? '&jsDelivr=true' : '' //用于开启jsDeliver的后缀
 
 //插件图标区域
 const iconStatus = $.getval('启用插件随机图标') ?? '启用'
-const iconReplace = $.getval('替换原始插件图标')
+const iconReplace = $.getval('替换原始插件图标') ?? '禁用'
 const iconLibrary1 = $.getval('插件随机图标合集') ?? 'Doraemon(100P)'
 const iconLibrary2 = iconLibrary1.split('(')[0]
-const iconFormat = iconLibrary2.search(/gif/i) == -1 ? '.png' : '.gif'
+const iconFormat = /gif/i.test(iconLibrary2) ? '.gif' : '.png'
 
 //统一前置声明变量
 let name,
   desc,
+  randomicon,
   body,
   jscStatus,
   jsc2Status,
@@ -104,8 +112,14 @@ let name,
   modistatus,
   hostdomain,
   hostvalue,
+  panelname,
+  title,
+  content,
+  style,
+  scriptname,
   jsurl,
   jsname,
+  img,
   jsfrom,
   jstype,
   eventname,
@@ -134,16 +148,15 @@ let name,
   MITM,
   force,
   result
-let icon = ''
+
 let Rewrite = isLooniOS ? '[Rewrite]' : '[URL Rewrite]'
 
 //随机插件图标
-if (isLooniOS && iconStatus == '启用') {
+if ((isStashiOS || isLooniOS) && iconStatus == '启用') {
   const stickerStartNum = 1001
   const stickerSum = iconLibrary1.split('(')[1].split('P')[0]
   let randomStickerNum = parseInt(stickerStartNum + Math.random() * stickerSum).toString()
-  icon =
-    '#!icon=' +
+  randomicon =
     'https://github.com/Toperlock/Quantumult/raw/main/icon/' +
     iconLibrary2 +
     '/' +
@@ -173,9 +186,18 @@ if (nName === null) {
   desc = nName[1] != undefined ? nName[1] : name
 }
 
+let modInfoObj = {
+  name: name,
+  desc: desc,
+  author: '',
+  icon: randomicon,
+  category: ''
+}
+
 //信息中转站
 let bodyBox = [] //存储待转换的内容
 let otherRule = [] //不支持的规则&脚本
+let notBuildInPolicy = [] //不是内置策略的规则
 let inBox = [] //被释放的重写或规则
 let outBox = [] //被排除的重写或规则
 let modInfoBox = [] //模块简介等信息
@@ -184,6 +206,7 @@ let hostBox = [] //host
 let ruleBox = [] //规则
 let rwBox = [] //重写
 let rwhdBox = [] //HeaderRewrite
+let panelBox = [] //Panel信息
 let jsBox = [] //脚本
 let mockBox = [] //MapLocal或echo-response
 let hnBox = [] //MITM主机名
@@ -215,8 +238,13 @@ let providers = []
 
 hnBox = hnAdd != null ? hnAdd : []
 
-const jsRegx =
+const jsRegex =
   /\s*[=,]\s*(?:script-path|pattern|timeout|argument|script-update-interval|requires-body|max-size|ability|binary-body-mode|cronexpr?|wake-system|enabled?|tag|type|img-url|debug|event-name|desc)\s*=\s*/
+
+const panelRegex =
+  /\s*[=,]\s*(?:title|content|style|script-name|update-interval)\s*=\s*/
+
+const policyRegex = /^(direct|reject-?(img|video|dict|array|drop|200|tinygif)?(-no-drop)?|\{\{\{[^,]+\}\}\})$/i
 
 //查询js binarymode相关
 let binaryInfo = $.getval('Parser_binary_info')
@@ -231,10 +259,10 @@ if (binaryInfo != null && binaryInfo.length > 0) {
     body = localText
   } else {
     for (let i = 0; i < reqArr.length; i++) {
-      let bodyobj = await $.http.get(reqArr[i])
-      let bodystatus = bodyobj.status
-      body = bodystatus == 200 ? bodyobj.body : bodystatus == 404 ? '#!error=404: Not Found' : ''
-      bodystatus == 404 && $.msg(JS_NAME, '来源链接已失效', '404: Not Found ---> ' + reqArr[i], '')
+      let res = await $.http.get(reqArr[i])
+      let reStatus = res.status
+      body = reStatus == 200 ? res.body : reStatus == 404 ? '#!error=404: Not Found' : ''
+      reStatus == 404 && $.msg(JS_NAME, '来源链接已失效', '404: Not Found ---> ' + reqArr[i], '')
 
       if (body.match(/^(?:\s)*\/\*[\s\S]*?(?:\r|\n)\s*\*+\//)) {
         body = body.match(/^(?:\n|\r)*\/\*([\s\S]*?)(?:\r|\n)\s*\*+\//)[1]
@@ -281,7 +309,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
         const elem = Pout0[i].trim()
         if (
           x.indexOf(elem) != -1 &&
-          x.search(/^(hostname|force-http-engine-hosts|skip-proxy|always-real-ip|real-ip)\s*=/) == -1 &&
+          !/^(hostname|force-http-engine-hosts|skip-proxy|always-real-ip|real-ip)\s*=/.test(x) &&
           !/^#/.test(x)
         ) {
           x = '#' + x
@@ -342,9 +370,9 @@ if (binaryInfo != null && binaryInfo.length > 0) {
     //模块信息
     if (/^#!.+?=\s*$/.test(x)) {
     } else if (isLooniOS && /^#!(?:select|input)\s*=\s*.+/.test(x)) {
-      getModInfo(x, modInputBox)
+      getInputInfo(x, modInputBox)
     } else if (/^#!.+?=.+/.test(x) && !/^#!(?:select|input)\s*=\s*.+/.test(x)) {
-      getModInfo(x, modInfoBox)
+      getModInfo(x)
     }
     
     //#!arguments参数
@@ -400,21 +428,15 @@ if (binaryInfo != null && binaryInfo.length > 0) {
       )
     ) {
       mark = getMark(y, body)
-      x = x.replace(/\s/g, '')
       noteK = isNoteK(x)
       ruletype = x.split(/\s*,\s*/)[0].replace(/^#/, '')
-      rulenore = /,no-resolve/.test(x) ? ',no-resolve' : ''
-      rulesni = /,extended-matching/.test(x) ? ',extended-matching' : ''
-      rulePandV = x.replace(/^#/, '').replace(ruletype, '').replace(rulenore, '').replace(rulesni, '').replace(/^,/, '')
-      rulepolicy = rulePandV.substring(rulePandV.lastIndexOf(',') + 1)
-      rulepolicy = /\)|\}/.test(rulepolicy) ? '' : rulepolicy
-      rulevalue = rulePandV.replace(rulepolicy, '').replace(/,$/, '').replace(/"/g, '')
-      if (rulepolicy != '' && rulevalue == '') {
-        rulevalue = rulepolicy
-        rulepolicy = ''
-      }
+      rulenore = /,\s*no-resolve/.test(x) ? ',no-resolve' : ''
+      rulesni = /,\s*extended-matching/.test(x) ? ',extended-matching' : ''
+      rulePandV = x.replace(/^#/, '').replace(ruletype, '').replace(/\s*,\s*no-resolve/, '').replace(/\s*,\s*extended-matching/, '').replace(/^\s*,\s*/, '')
+      rulepolicy = getPolicy(rulePandV)
+      rulevalue = rulePandV.replace(rulepolicy, '').replace(/\s*,\s*$/, '').replace(/"/g, '')
 
-      if (nPolicy != null && !/direct|reject/.test(rulepolicy)) {
+      if (nPolicy != null && !policyRegex.test(rulepolicy)) {
         rulepolicy = nPolicy
         modistatus = 'yes'
       } else {
@@ -433,6 +455,30 @@ if (binaryInfo != null && binaryInfo.length > 0) {
       hostvalue = x.split(/\s*=\s*/)[1]
       hostBox.push({ mark, noteK, hostdomain, hostvalue, ori: x })
     }
+    
+    //Panel信息
+    if (/[=,]\s*script-name\s*=.+/.test(x)) {
+      mark = getMark(y, body)
+      noteK = isNoteK(x)
+      panelname = x.split(/\s*=/)[0].replace(/^#/, '')
+      title = getJsInfo(x, /[=,\s]\s*title\s*=\s*/)
+      content = getJsInfo(x, /[=,\s]\s*content\s*=\s*/)
+      style = getJsInfo(x, /[=,\s]\s*style\s*=\s*/)
+      scriptname = getJsInfo(x, /[=,\s]\s*script-name\s*=\s*/)
+      updatetime = getJsInfo(x, /[=,\s]\s*update-interval\s*=\s*/)
+      panelBox.push({
+        mark,
+        noteK,
+        panelname,
+        title,
+        content,
+        style,
+        scriptname,
+        updatetime,
+        ori: x,
+        num: y,
+      })  
+    }//Panel信息解析结束
 
     //脚本解析
     if (/script-path\s*=.+/.test(x)) {
@@ -444,6 +490,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
         : /,\s*tag\s*=\s*/.test(x)
         ? getJsInfo(x, /,\s*tag\s*=\s*/)
         : jsurl.substring(jsurl.lastIndexOf('/') + 1, jsurl.lastIndexOf('.'))
+      img = getJsInfo(x, /[,\s]\s*img-url\s*=\s*/)
       jsfrom = 'surge'
       jsurl = toJsc(jsurl, jscStatus, jsc2Status, jsfrom)
       jstype = /[=,]\s*type\s*=\s*/.test(x) ? getJsInfo(x, /[=,]\s*type\s*=\s*/) : x.split(/\s+/)[0].replace(/^#/, '')
@@ -471,6 +518,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
         mark,
         noteK,
         jsname,
+        img,
         jstype,
         jsptn,
         jsurl,
@@ -538,7 +586,8 @@ if (binaryInfo != null && binaryInfo.length > 0) {
         .replace(cronexp, '')
         .split(/\s*,\s*/)[0]
         .trim()
-      jsname = jsurl.substring(jsurl.lastIndexOf('/') + 1, jsurl.lastIndexOf('.'))
+      jsname = /,\s*tag\s*=/.test(x) ? getJsInfo(x, /[,\s]\s*tag\s*=\s*/) : jsurl.substring(jsurl.lastIndexOf('/') + 1, jsurl.lastIndexOf('.'))
+      img = getJsInfo(x, /[,\s]\s*img-url\s*=\s*/)
       jsfrom = 'qx'
       jsurl = toJsc(jsurl, jscStatus, jsc2Status, jsfrom)
       jsarg = ''
@@ -546,6 +595,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
         mark,
         noteK,
         jsname,
+        img,
         jstype: 'cron',
         jsptn: '',
         cronexp,
@@ -582,12 +632,6 @@ if (binaryInfo != null && binaryInfo.length > 0) {
 
   ruleBox = [...new Set(ruleBox)]
 
-  modInfoBox = modInfoBox.reduce((curr, next) => {
-    /*判断对象中是否已经有该属性  没有的话 push 到 curr数组*/
-    obj[next.a] ? '' : (obj[next.a] = curr.push(next))
-    return curr
-  }, [])
-
   modInputBox = modInputBox.reduce((curr, next) => {
     /*判断对象中是否已经有该属性  没有的话 push 到 curr数组*/
     obj[next.a + next.b] ? '' : (obj[next.a + next.b] = curr.push(next))
@@ -603,6 +647,12 @@ if (binaryInfo != null && binaryInfo.length > 0) {
   rwBox = rwBox.reduce((curr, next) => {
     /*判断对象中是否已经有该属性  没有的话 push 到 curr数组*/
     obj[next.rwptn] ? '' : (obj[next.rwptn] = curr.push(next))
+    return curr
+  }, [])
+
+  panelBox = panelBox.reduce((curr, next) => {
+    /*判断对象中是否已经有该属性  没有的话 push 到 curr数组*/
+    obj[next.scriptname] ? '' : (obj[next.scriptname] = curr.push(next))
     return curr
   }, [])
 
@@ -623,12 +673,8 @@ if (binaryInfo != null && binaryInfo.length > 0) {
   inBox = (inBox[0] || '') && `已根据关键词保留以下内容:\n${inBox.join('\n\n')}`
   outBox = (outBox[0] || '') && `已根据关键词排除以下内容:\n${outBox.join('\n')}`
 
-  inBox.length > 0 &&
-    noNtf == false &&
-    $.msg(JS_NAME, notifyName + ' 点击通知查看详情', `${inBox}`, { url: url + '&openInBoxHtml=true' })
-  outBox.length > 0 &&
-    noNtf == false &&
-    $.msg(JS_NAME, notifyName + ' 点击通知查看详情', `${outBox}`, { url: url + '&openOutBoxHtml=true' })
+  shNotify(inBox)
+  shNotify(outBox)
 
   //mitm删除主机名
   if (hnDel != null && hnBox.length > 0) hnBox = hnBox.filter(item => hnDel.indexOf(item) == -1)
@@ -651,34 +697,30 @@ if (binaryInfo != null && binaryInfo.length > 0) {
     case 'surge-module':
     case 'shadowrocket-module':
     case 'loon-plugin':
-      for (let i = 0; i < modInfoBox.length; i++) {
-        info = '#!' + modInfoBox[i].a + modInfoBox[i].b
-        if (nName != null && /#!name\s*=/.test(info)) info = '#!name=' + name
-        if (nName != null && /#!desc\s*=/.test(info)) info = '#!desc=' + desc
-        if (isLooniOS && iconReplace == '启用' && /#!icon\s*=.+/.test(info)) info = icon
-        modInfo.push(info)
-      } //for
+    case 'stash-stoverride':
+      modInfoObj['name'] = nName == null ? modInfoObj['name'] : name
+      modInfoObj['desc'] = nName == null ? modInfoObj['desc'] : desc
+      modInfoObj['category'] = category == null ? modInfoObj['category'] : category
+      if (icon == null) {
+        modInfoObj['icon'] = iconReplace == '禁用' ? modInfoObj['icon'] : randomicon
+      } else {
+        modInfoObj['icon'] =
+        /\//.test(icon) ?
+        icon :
+        await getIcon(icon)
+      }
+      
+      for (let key in modInfoObj) {
+        if (modInfoObj[key]){
+          let info = !isStashiOS ? ('#!' + key + '=' + modInfoObj[key]) : (key + ': |-\n  ' + modInfoObj[key])
+          modInfo.push(info)
+        }
+      }
 
       for (let i = 0; i < modInputBox.length; i++) {
-        info = '#!' + modInputBox[i].a + modInputBox[i].b
+        let info = '#!' + modInputBox[i].a + modInputBox[i].b
         modInfo.push(info)
       } //for
-
-      if ($.toStr(modInfo).search(/#!name=/) == -1) modInfo.push('#!name=' + name)
-      if ($.toStr(modInfo).search(/#!desc=/) == -1) modInfo.push('#!desc=' + desc)
-      if (isLooniOS && modInfo.length > 0 && $.toStr(modInfo).search(/#!icon=/) == -1) modInfo.push(icon)
-      break
-
-    case 'stash-stoverride':
-      for (let i = 0; i < modInfoBox.length; i++) {
-        info = modInfoBox[i].a.replace(/\s*=\s*/, '') + ': ' + modInfoBox[i].b
-        if (nName != null && /^name:\s*"/.test(info)) info = 'name: ' + name
-        if (nName != null && /^desc:\s*"/.test(info)) info = 'desc: ' + desc
-        modInfo.push(info)
-      } //for
-      if ($.toStr(modInfo).search(/name:\s/) == -1) modInfo.push('name: ' + name)
-      if ($.toStr(modInfo).search(/desc:\s/) == -1) modInfo.push('desc: ' + desc)
-
       break
   } //模块信息输出结束
 
@@ -702,11 +744,12 @@ if (binaryInfo != null && binaryInfo.length > 0) {
     ruletype = ruleBox[i].ruletype.toUpperCase()
     rulevalue = ruleBox[i].rulevalue ? ruleBox[i].rulevalue : ''
     rulepolicy = ruleBox[i].rulepolicy ? ruleBox[i].rulepolicy : ''
-    rulepolicy = /direct|reject/i.test(rulepolicy) ? rulepolicy.toUpperCase() : rulepolicy
+    rulepolicy = (policyRegex.test(rulepolicy) && !/\{\{\{[^,]+\}\}\}/.test(rulepolicy)) ? rulepolicy.toUpperCase() : rulepolicy
     rulenore = ruleBox[i].rulenore ? ruleBox[i].rulenore : ''
     rulesni = ruleBox[i].rulesni ? ruleBox[i].rulesni : ''
     rulesni = isLooniOS || isStashiOS ? '' : rulesni
     modistatus = ruleBox[i].modistatus
+    ori = ruleBox[i].ori
     if (/de?st-port/i.test(ruletype)) {
       ruletype = isSurgeiOS ? 'DEST-PORT' : 'DST-PORT'
     }
@@ -726,12 +769,12 @@ if (binaryInfo != null && binaryInfo.length > 0) {
       rulepolicy = rulepolicy.replace(/-no-drop/i, '')
     }
 
-    if (rulevalue == '' || rulepolicy == '') {
-      otherRule.push(ruleBox[i].ori)
-    } else if (/proxy/i.test(rulepolicy) && modistatus == 'no' && (isSurgeiOS || isStashiOS || isShadowrocket)) {
-      otherRule.push(ruleBox[i].ori)
-    } else if (!/direct|reject|proxy/i.test(rulepolicy) && modistatus == 'no') {
-      otherRule.push(ruleBox[i].ori)
+    if (rulepolicy == '') {
+      notBuildInPolicy.push(ori)
+    } else if (/^proxy$/i.test(rulepolicy) && modistatus == 'no' && (isSurgeiOS || isStashiOS)) {
+      notBuildInPolicy.push(ori)
+    } else if (!policyRegex.test(rulepolicy) && !/^proxy$/i.test(rulepolicy) && modistatus == 'no') {
+      notBuildInPolicy.push(ori)
     } else if (/^(?:and|or|not|protocol|domain-set|rule-set)$/i.test(ruletype) && isSurgeiOS) {
       rules.push(mark + noteK + ruletype + ',' + rulevalue + ',' + rulepolicy + rulenore + rulesni)
     } else if (/^(?:and|or|not|domain-set|rule-set)$/i.test(ruletype) && isShadowrocket) {
@@ -759,7 +802,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
 
       URLRewrite.push(mark + noteK4 + '- >-' + noteKn6 + rulevalue + ' - reject' + Urx2Reject)
     } else {
-      otherRule.push(ruleBox[i].ori)
+      otherRule.push(ori)
     }
   } //for rule输出结束
 
@@ -879,10 +922,11 @@ if (binaryInfo != null && binaryInfo.length > 0) {
     mark = hostBox[i].mark ? hostBox[i].mark : ''
     hostdomain = hostBox[i].hostdomain
     hostvalue = hostBox[i].hostvalue
+    ori = hostBox[i].ori
     if (isStashiOS) {
-      otherRule.push(hostBox[i].ori)
+      otherRule.push(ori)
     } else if (isLooniOS && /script\s*:\s*/.test(hostvalue)) {
-      otherRule.push(hostBox[i].ori)
+      otherRule.push(ori)
     } else if (isSurgeiOS || isShadowrocket || isLooniOS) {
       host.push(mark + noteK + hostdomain + ' = ' + hostvalue)
     }
@@ -906,6 +950,34 @@ if (binaryInfo != null && binaryInfo.length > 0) {
     } //switch
   } //Mock输出for
 
+  //Panel输出
+  if (isSurgeiOS && panelBox.length > 0) {
+    for (let i = 0; i < panelBox.length; i++) {
+      noteK = panelBox[i].noteK ? '#' : ''
+      mark = panelBox[i].mark ? panelBox[i].mark : ''
+      panelname = panelBox[i].panelname
+      title = panelBox[i].title ? ', title=' + panelBox[i].title : ''
+      content = panelBox[i].content ? ', content=' + panelBox[i].content : ''
+      style = panelBox[i].style ? ',style=' + panelBox[i].style : ''
+      scriptname = panelBox[i].scriptname
+      updatetime = panelBox[i].updatetime ? ', update-interval=' + panelBox[i].updatetime : ''
+      ori = panelBox[i].ori
+      scriptname = reJsValue(njsnametarget || 'null', njsname, scriptname, ori, scriptname)
+      Panel.push(
+              mark +
+                noteK +
+                panelname +
+                ' = ' +
+                'script-name=' +
+                scriptname +
+                title +
+                content +
+                style +
+                updatetime
+            )
+    }//for
+  }//panel输出结束
+
   //脚本输出
   if (!isStashiOS && jsBox.length > 0) {
     for (let i = 0; i < jsBox.length; i++) {
@@ -917,6 +989,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
       if (/,/.test(jsptn) && isSurgeiOS) jsptn = '"' + jsptn + '"'
       if ((isSurgeiOS || isShadowrocket) && jsptn != '') jsptn = ', pattern=' + jsptn
       jsname = jsBox[i].jsname
+      img = jsBox[i].img ? ', img-url=' + jsBox[i].img : ''
       eventname = jsBox[i].eventname ? ', event-name=' + jsBox[i].eventname : ', event-name=network-changed'
       jstype =
         isLooniOS && /event/.test(jstype)
@@ -956,9 +1029,9 @@ if (binaryInfo != null && binaryInfo.length > 0) {
           if (jsarg != '' && (!/,/.test(jsarg) || /^".+"$/.test(jsarg))) jsarg = ', argument=' + jsarg
 
           if (/generic/.test(jstype) && isShadowrocket) {
-            otherRule.push(jsBox[i].ori)
+            otherRule.push(ori)
           } else if (/request|response|network-changed|generic/.test(jstype) && isLooniOS) {
-            script.push(
+            /[=,]\s*type\s*=\s*generic/.test(ori) ? otherRule.push(ori) : script.push(
               mark +
                 noteK +
                 jstype +
@@ -970,10 +1043,11 @@ if (binaryInfo != null && binaryInfo.length > 0) {
                 timeout +
                 ', tag=' +
                 jsname +
+                img +
                 jsarg
             )
           } else if (/request|response|generic/.test(jstype) && (isSurgeiOS || isShadowrocket)) {
-            script.push(
+            /^generic\s/.test(ori) ? otherRule.push(ori) : script.push(
               mark +
                 noteK +
                 jsname +
@@ -1035,6 +1109,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
                 timeout +
                 ', tag=' +
                 jsname +
+                img +
                 jsarg
             )
           } else if (/dns|rule/.test(jstype) && (isSurgeiOS || isShadowrocket)) {
@@ -1042,11 +1117,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
               mark + noteK + jsname + ' = type=' + jstype + ', script-path=' + jsurl + updatetime + timeout + jsarg
             )
           } else {
-            otherRule.push(jsBox[i].ori)
-          }
-
-          if (isSurgeiOS && jstype == 'generic') {
-            Panel.push(noteK + jsname + ' = script-name=' + jsname + ', update-interval=3600')
+            otherRule.push(ori)
           }
           break
       } //switch
@@ -1091,7 +1162,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
       proto = jsBox[i].proto ? noteKn6 + 'binary-mode: ' + istrue(jsBox[i].proto) : ''
       size = jsBox[i].size ? noteKn6 + 'max-size: ' + jsBox[i].size : ''
       cronexp = jsBox[i].cronexp ? jsBox[i].cronexp.replace(/"/g,"") : ""
-      timeout = jsBox[i].timeout ? noteKn6 + 'timeout: ' + jsBox[i].timeout : ''
+      timeout = jsBox[i].timeout ? jsBox[i].timeout : ''
       jsarg = jsBox[i].jsarg ? jsBox[i].jsarg.replace(/^"(.+)"$/,"$1") : ''
       tilesicon = jsBox[i].tilesicon ? jsBox[i].tilesicon : ''
       tilescolor = jsBox[i].tilescolor ? jsBox[i].tilescolor : ''
@@ -1112,6 +1183,13 @@ if (binaryInfo != null && binaryInfo.length > 0) {
           ? noteKn4 + 'argument: |-' + noteKn6 + jsarg
           : jsarg && jstype != 'generic'
           ? noteKn6 + 'argument: |-' + noteKn8 + jsarg
+          : ''
+
+      timeout =
+        timeout && jstype == 'generic'
+          ? noteKn4 + 'timeout: ' + timeout
+          : timeout && jstype != 'generic'
+          ? noteKn6 + 'timeout: ' + timeout
           : ''
 
       if (/request|response/.test(jstype)) {
@@ -1140,13 +1218,13 @@ if (binaryInfo != null && binaryInfo.length > 0) {
         providers.push(`${noteK2}"` + jsname + '":' + `${noteKn4}url: ` + jsurl + `${noteKn4}interval: 86400`)
       }
       if (jstype == 'generic') {
-        tiles.push(
+        /^generic\s/.test(ori) ? otherRule.push(ori) : tiles.push(
           mark +
-            `${noteK2}- name: "${jsname}"${noteKn4}interval: 3600${noteKn4}title: "${jsname}"${noteKn4}icon: "${tilesicon}"${noteKn4}backgroundColor: "${tilescolor}"${noteKn4}timeout: 30${jsarg}`
+            `${noteK2}- name: "${jsname}"${noteKn4}interval: 3600${noteKn4}title: "${jsname}"${noteKn4}icon: "${tilesicon}"${noteKn4}backgroundColor: "${tilescolor}"${timeout}${jsarg}`
         )
-        providers.push(`${noteK2}"${jsname}":${noteKn4}url: ${jsurl}${noteKn4}interval: 86400`)
+        ;/^generic\s/.test(ori) ? '' : providers.push(`${noteK2}"${jsname}":${noteKn4}url: ${jsurl}${noteKn4}interval: 86400`)
       }
-      ;/event|rule|dns/i.test(jstype) && otherRule.push(jsBox[i].ori)
+      ;/network-changed|event|rule|dns/i.test(jstype) && otherRule.push(ori)
     } //for循环
   } //是Stash的脚本输出
 
@@ -1155,12 +1233,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
     case 'surge-module':
     case 'shadowrocket-module':
     case 'loon-plugin':
-      modInfo =
-        (modInfo[0] || '') &&
-        `${modInfo.join('\n')}`
-          .replace(/([\s\S]*)(#!desc=.+\n?)([\s\S]*)/, '$2\n$1\n$3')
-          .replace(/([\s\S]*)(#!name=.+\n?)([\s\S]*)/, '$2\n$1\n$3')
-          .replace(/\n{2,}/g, '\n')
+      modInfo = (modInfo[0] || '') && `${modInfo.join('\n')}`
 
       rules = (rules[0] || '') && `[Rule]\n${rules.join('\n')}`
 
@@ -1212,18 +1285,11 @@ ${script}
 
 ${MITM}
 
-`.replace(/\n{2,}/g, '\n\n')
-
+`
       break
 
     case 'stash-stoverride':
-      modInfo =
-        (modInfo[0] || '') &&
-        `${modInfo.join('\n')}`
-          .replace(/([\s\S]*)(^desc: .+\n?)([\s\S]*)/m, '$2\n$1\n$3')
-          .replace(/([\s\S]*)(^name: .+\n?)([\s\S]*)/m, '$2\n$1\n$3')
-          .replace(/^([^:]+: )/mg,"$1|-\n  ")
-          .replace(/\n{2,}/g, '\n')
+      modInfo = (modInfo[0] || '') && `${modInfo.join('\n')}`
 
       tiles = (tiles[0] || '') && `tiles:\n${tiles.join('\n\n')}`
 
@@ -1277,11 +1343,10 @@ ${cron}
 
 ${providers}
 
-`.replace(/\n{2,}/g, '\n\n')
-
+`
       break
   } //输出内容结束
-
+  body = body.replace(/\n{2,}/g, '\n\n')
   if (sgArg.length > 0) {
     for (let i = 0 ;i<sgArg.length; i++) {
       let e = "{{{" + sgArg[i].key + "}}}"
@@ -1294,14 +1359,15 @@ ${providers}
   eval(evUrlmodi)
 
   otherRule = (otherRule[0] || '') && `${app}不支持以下内容:\n${otherRule.join('\n')}`
+  
+  notBuildInPolicy = (notBuildInPolicy[0] || '') && `不是${app}内置策略且未指定策略的规则:\n${notBuildInPolicy.join('\n')}`
 
-  noNtf == false &&
-    otherRule.length > 0 &&
-    $.msg(JS_NAME, `${notifyName} 点击通知查看详情`, `${otherRule}`, { url: url + '&openOtherRuleHtml=true' })
+  shNotify(otherRule)
+  shNotify(notBuildInPolicy)
 
-  if (openInBoxHtml || openOutBoxHtml || openOtherRuleHtml) {
+  if (openMsgHtml) {
     result = {
-      body: inBox + '\n\n' + outBox + '\n\n' + otherRule,
+      body: (JS_NAME + '\n\n' + inBox + '\n\n' + outBox + '\n\n' + otherRule + '\n\n' + notBuildInPolicy).replace(/\n{2,}/g,"\n\n"),
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     }
     $.isQuanX() ? (result.status = 'HTTP/1.1 200') : (result.status = 200)
@@ -1343,12 +1409,44 @@ function getMark(index, obj) {
   return mark
 }
 
-//名字简介解析
-function getModInfo(x, box) {
+function getArgArr(str) {
+  let arr = str.split('+')
+  return arr.map(item => item.replace(/➕/g,'+'))
+}
+
+//loon的input select互动按钮解析
+function getInputInfo(x, box) {
   x = x.replace(/\s*=\s*/, '=')
   ;/^#!.+=.+/.test(x) ? (a = x.replace(/^#!/, '').match(/.+?=/)[0]) : ''
   ;/^#!.+=.+/.test(x) ? (b = x.replace(/^#!/, '').replace(a, '')) : ''
   box.push({ a, b })
+}
+
+//名字简介解析
+function getModInfo (x) {
+  const regex = /^#!\s*([^\s]+?)\s*=\s*(.+)/
+  let key = x.match(regex)[1]
+  let value = x.match(regex)[2]
+  modInfoObj[key] = value
+}
+
+//获取可莉图标集
+async function getIcon (icon) {
+  let url = 'https://gitlab.com/lodepuly/iconlibrary/-/raw/main/KeLee_icon.json'
+  let kicon = $.getjson('Parser_Kelee_icon')
+  if (!kicon) {
+    kicon = $.toObj((await $.http.get(url)).body)['icons']
+    $.setjson(kicon, 'Parser_Kelee_icon')
+  }
+  for (let i = 0; i < kicon.length; i++) {
+    if (kicon[i].name == icon) return kicon[i].url
+  }
+    kicon = $.toObj((await $.http.get(url)).body)['icons']
+    $.setjson(kicon, 'Parser_Kelee_icon')
+  for (let i = 0; i < kicon.length; i++) {
+    if (kicon[i].name == icon) return kicon[i].url
+  }
+  return 'icon not found'
 }
 
 //reject
@@ -1392,11 +1490,12 @@ function rw_redirect(x, mark) {
 }
 
 //script
-function getJsInfo(x, regx) {
-  if (regx.test(x)) {
+function getJsInfo(x, regex) {
+  let parserRegex = /script-name\s*=/.test(x) ? panelRegex : jsRegex
+  if (regex.test(x)) {
     return x
-      .split(regx)[1]
-      .split(jsRegx)[0]
+      .split(regex)[1]
+      .split(parserRegex)[0]
   } else {
     return ''
   }
@@ -1433,7 +1532,7 @@ function getQxReInfo(x, y, mark) {
   let rearg2 = x
     .split(breakpoint)[2]
     .trim()
-  let jsarg = '"' + rearg1 + '->' + rearg2 + '"'
+  let jsarg = encodeURIComponent(rearg1 + '->' + rearg2)
   let rebody = /body/.test(hdorbd) ? 'true' : ''
   let size = /body/.test(hdorbd) ? '-1' : ''
   jsBox.push({ mark, noteK, jsname, jstype, jsptn, jsurl, rebody, size, timeout: '30', jsarg, ori: x, num: y })
@@ -1582,6 +1681,25 @@ function toJsc(jsurl, jscStatus, jsc2Status, jsfrom) {
   } else {
     return jsurl
   }
+}
+
+function shNotify (box) {
+  noNtf == false &&
+  box.length > 0 &&
+    $.msg(JS_NAME, notifyName + ' 点击通知查看详情', box, { url: url + '&openMsgHtml=true' })
+}
+
+function getPolicy (str) {
+	let commaNum = str.lastIndexOf(',')
+	let bracesNum = str.lastIndexOf('}')
+	let roundNum = str.lastIndexOf(')')
+	if (/,\s*\{\{\{[^,]+\}\}\}$/.test(str)) {
+    return str.match(/\{\{\{[^,]+\}\}\}$/)[0]
+  } else if (commaNum > bracesNum && commaNum > roundNum) {
+		return (str.substring(str.lastIndexOf(',') + 1)).trim()
+	} else {
+		return ''
+	}
 }
 
 function parseArguments (str) {
