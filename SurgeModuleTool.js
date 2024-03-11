@@ -3,7 +3,7 @@
 // icon-color: blue; icon-glyph: cloud-download-alt;
 
 // prettier-ignore
-let ToolVersion = "2.01";
+let ToolVersion = "2.03";
 
 async function delay(milliseconds) {
   var before = Date.now()
@@ -183,6 +183,7 @@ for await (const [index, file] of files.entries()) {
       if (!desc) {
         res = `#!desc=\n${res}`
       }
+      res = res.replace(/^(#SUBSCRIBED|# 🔗 模块链接)(.*?)(\n|$)/gim, '')
       // console.log(res);
       res = addLineAfterLastOccurrence(res, `\n\n# 🔗 模块链接\n${subscribed.replace(/\n/g, '')}\n`)
       content = `${res}`.replace(/^#\!desc\s*?=\s*/im, `#!desc=🔗 [${new Date().toLocaleString()}] `)
@@ -248,8 +249,10 @@ for await (const [index, file] of files.entries()) {
 }
 if (!checkUpdate && !fromUrlScheme) {
   alert = new Alert()
+  let upErrk = report.fail.length > 0 ? `❌ 更新失败: ${report.fail.length}` : "",
+  noUrlErrk = report.noUrl > 0 ? `🈚️ 无链接: ${report.noUrl}` : "";
   alert.title = `📦 模块总数${report.success + report.fail.length + report.noUrl}`
-  alert.message = `🈚️ 无链接: ${report.noUrl}\n✅ 更新成功: ${report.success}\n❌ 更新失败: ${report.fail.length}${
+  alert.message = `${noUrlErrk}\n✅ 更新成功: ${report.success}\n${upErrk}${
     report.fail.length > 0 ? `\n${report.fail.join(', ')}` : ''
   }`
   alert.addDestructiveAction('重载 Surge')
