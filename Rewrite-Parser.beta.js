@@ -433,7 +433,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
 
     //rule解析
     if (
-      /^#?(?:domain(?:-suffix|-keyword|-set)?|ip-cidr6?|ip-asn|rule-set|user-agent|url-regex|de?st-port|and|not|or|protocol)\s*,.+/i.test(
+      /^#?(?:domain(?:-suffix|-keyword|-set)?|ip-cidr6?|ip-asn|rule-set|user-agent|url-regex|(de?st|in|src)-port|and|not|or|protocol)\s*,.+/i.test(
         x
       )
     ) {
@@ -611,9 +611,9 @@ if (binaryInfo != null && binaryInfo.length > 0) {
         .split(/\s*,\s*/)[0]
         .trim()
       jsname = /,\s*tag\s*=/.test(x)
-        ? getJsInfo(x, /[,\s]\s*tag\s*=\s*/)
+        ? getJsInfo(x, /[,\s]\s*tag\s*=\s*/, jsRegex)
         : jsurl.substring(jsurl.lastIndexOf('/') + 1, jsurl.lastIndexOf('.'))
-      img = getJsInfo(x, /[,\s]\s*img-url\s*=\s*/)
+      img = getJsInfo(x, /[,\s]\s*img-url\s*=\s*/, jsRegex)
       jsfrom = 'qx'
       jsurl = toJsc(jsurl, jscStatus, jsc2Status, jsfrom)
       jsarg = ''
@@ -775,7 +775,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
     modistatus = ruleBox[i].modistatus
     ori = ruleBox[i].ori
     if (/de?st-port/i.test(ruletype)) {
-      ruletype = isSurgeiOS ? 'DEST-PORT' : 'DST-PORT'
+      ruletype = (isSurgeiOS || isLooniOS) ? 'DEST-PORT' : 'DST-PORT'
     }
     if (/reject-video/i.test(rulepolicy) && !isLooniOS) {
       rulepolicy = 'REJECT-TINYGIF'
@@ -799,16 +799,18 @@ if (binaryInfo != null && binaryInfo.length > 0) {
       notBuildInPolicy.push(ori)
     } else if (!policyRegex.test(rulepolicy) && !/^proxy$/i.test(rulepolicy) && modistatus == 'no') {
       notBuildInPolicy.push(ori)
-    } else if (/^(?:and|or|not|protocol|domain-set|rule-set)$/i.test(ruletype) && isSurgeiOS) {
+    } else if (/^in-port$/i.test(ruletype) && isSurgeiOS) {
       rules.push(mark + noteK + ruletype + ',' + rulevalue + ',' + rulepolicy + rulenore + rulesni)
-    } else if (/^(?:and|or|not|domain-set|rule-set)$/i.test(ruletype) && isShadowrocket) {
+    } else if (/^protocol$/i.test(ruletype) && (isLooniOS || isSurgeiOS)) {
+      rules.push(mark + noteK + ruletype + ',' + rulevalue + ',' + rulepolicy + rulenore)
+    } else if (/^(?:domain-set|rule-set)$/i.test(ruletype) && (isSurgeiOS || isShadowrocket)) {
       rules.push(mark + noteK + ruletype + ',' + rulevalue + ',' + rulepolicy + rulenore + rulesni)
-    } else if (/(?:^domain$|domain-suffix|domain-keyword|ip-|user-agent|url-regex)/i.test(ruletype) && !isStashiOS) {
-      rulevalue = /,/.test(rulevalue) ? '"' + rulevalue + '"' : rulevalue
+    } else if (/^(?:domain(-suffix|-keyword)?|ip(-asn|-cidr6?)|user-agent|url-regex|de?st-port|and|or|not)$/i.test(ruletype) && !isStashiOS) {
+      rulevalue = (/,/.test(rulevalue) && !/[()]/.test(rulevalue)) ? '"' + rulevalue + '"' : rulevalue
       rules.push(mark + noteK + ruletype + ',' + rulevalue + ',' + rulepolicy + rulenore + rulesni)
     } else if (/(?:^domain$|domain-suffix|domain-keyword|ip-|de?st-port)/i.test(ruletype) && isStashiOS) {
       rules.push(mark + noteK2 + '- ' + ruletype + ',' + rulevalue + ',' + rulepolicy + rulenore)
-    } else if (/de?st-port/.test(ruletype) && isSurgeiOS && isShadowrocket) {
+    } else if (/src-port/i.test(ruletype) && (isSurgeiOS || isLooniOS)) {
       rules.push(mark + noteK + ruletype + ',' + rulevalue + ',' + rulepolicy)
     } else if (/url-regex/i.test(ruletype) && isStashiOS && /reject/i.test(rulepolicy)) {
       let Urx2Reject
@@ -1533,8 +1535,8 @@ function rw_redirect(x, mark) {
 }
 
 //script
-function getJsInfo(x, regex) {
-  let parserRegex = /script-name\s*=/.test(x) ? panelRegex : /script-path\s*=/.test(x) ? jsRegex : mockRegex
+function getJsInfo(x, regex, parserRegex) {
+  parserRegex = typeof parserRegex != 'undefined' ? parserRegex : /script-name\s*=/.test(x) ? panelRegex : /script-path\s*=/.test(x) ? jsRegex : /\s(data-type|data)\s*=/.test(x) ? mockRegex : ''
   if (regex.test(x)) {
     return x.split(regex)[1].split(parserRegex)[0]
   } else {
@@ -1661,7 +1663,7 @@ function getMockInfo(x, mark, y) {
       let m2rType
       if (/dict|^\{\}$/i.test(mfile)) m2rType = 'reject-dict'
       else if (/array|^\[\]$/i.test(mfile)) m2rType = 'reject-array'
-      else if (/200|blank|^\s*$/i.test(mfile)) m2rType = 'reject-200'
+      else if (/200|blank|^[\s\S]?$/i.test(mfile)) m2rType = 'reject-200'
       else if (/img|tinygif/i.test(mfile) || mocktype == 'tiny-gif') m2rType = 'reject-img'
       else m2rType = null
 
