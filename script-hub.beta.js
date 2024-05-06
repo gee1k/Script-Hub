@@ -851,7 +851,7 @@ const htmls = `
             <label :for="'input-type-' + item.value" class="radio-label">{{item.label}}</label>
         </span>
         <textarea v-if=" inputType === 'local-text' " style=" position: relative; top: 4px; " id="localtext" v-model.lazy="localtext" placeholder="请填写本地文件内容"></textarea>
-        <textarea v-else style=" position: relative; top: 4px; " id="src" v-model.lazy="src" placeholder="请填写来源 URL 链接"></textarea>
+        <textarea v-else style=" position: relative; top: 4px; " id="src" v-model.lazy="src" placeholder="请填写来源 URL 链接(多个 URL 用 😂 连接)"></textarea>
       </div>
       <!--font-size: 16px;  style=" position: relative; top: -3px; "-->
       <small style=" position: relative; top: 7px; ">&nbsp;&#9432; <a href="https://github.com/Script-Hub-Org/Script-Hub/wiki/%E6%88%91%E5%BA%94%E8%AF%A5%E6%80%8E%E4%B9%88%E9%80%89%E6%8B%A9%E6%9D%A5%E6%BA%90%E7%B1%BB%E5%9E%8B%E5%92%8C%E7%9B%AE%E6%A0%87%E7%B1%BB%E5%9E%8B" target="_blank">如何选择类型</a></small>
@@ -901,12 +901,12 @@ const htmls = `
         <span v-if="result" style="color: red">请勿打开链接之后复制浏览器地址栏的链接 浏览器地址栏中的链接可能未编码 可能会导致导入参数异常</span><br/>
         <a v-if="result" :href="result" target="_blank" style="margin: 0 0.5rem 0 0">打开链接</a>
         <a v-if="previewResult" :href="previewResult" target="_blank" style="margin: 0 0.5rem 0 0">预览结果</a>
-        <a v-if="result && target === 'shadowrocket-module' " :href=" 'https://api.boxjs.app/shadowrocket/install?module=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Shadowrocket)</a>
-        <a v-if="result && target === 'loon-plugin' " :href=" 'https://www.nsloon.com/openloon/import?plugin=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Loon)</a>
-        <a v-if="result && target === 'stash-stoverride' " :href=" 'stash://install-override?url=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入(Stash)</a>
+        <a v-if="result && target === 'shadowrocket-module' " :href=" 'https://api.boxjs.app/shadowrocket/install?module=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">导入(Shadowrocket)</a>
+        <a v-if="result && target === 'loon-plugin' " :href=" 'https://www.nsloon.com/openloon/import?plugin=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">导入(Loon)</a>
+        <a v-if="result && target === 'stash-stoverride' " :href=" 'stash://install-override?url=' + encodeURIComponent(result) " target="_blank" style="margin: 0 0.5rem 0 0">导入(Stash)</a>
         <template v-if="result && target === 'surge-module' ">
-          <a :href=" 'surge:///install-module?url=' + encodeURIComponent(result) + '&name=' + encodeURIComponent(filename) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入 Surge(TestFlight 版)</a>
-          <a :href=" 'scriptable:///run/SurgeModuleTool?url=' + encodeURIComponent(result) + '&name=' + encodeURIComponent(filename) " target="_blank" style="margin: 0 0.5rem 0 0">一键导入 Surge(需配合 Scriptable)</a>
+          <a :href=" 'surge:///install-module?url=' + encodeURIComponent(result) + '&name=' + encodeURIComponent(filename) " target="_blank" style="margin: 0 0.5rem 0 0">导入 Surge(远程模块)</a>
+          <a :href=" 'scriptable:///run/SurgeModuleTool?url=' + encodeURIComponent(result) + '&name=' + encodeURIComponent(filename) " target="_blank" style="margin: 0 0.5rem 0 0">导入 Surge(本地模块 需配合 Scriptable)</a>
           <small>&#9432; <a href="https://github.com/Script-Hub-Org/Script-Hub/wiki/%E7%9B%B8%E5%85%B3%E7%94%9F%E6%80%81:-Surge-%E6%A8%A1%E5%9D%97%E5%B7%A5%E5%85%B7" target="_blank">如何配合 Scriptable 导入</a></small>
         </template>
         <template v-if="result">
@@ -1175,6 +1175,11 @@ const htmls = `
       </div>
 
 
+      <details v-if="inputType !== 'local-text'">
+        <summary>自定义请求的 Headers</summary>
+        <span>格式(使用英文冒号 不要加无意义的空格): <code>Field:Value</code> 可换行输入多个</span>
+        <textarea id="headers" v-model.lazy="headers" placeholder="Authorization:token xxx"></textarea>
+      </details>
       <details>
         <summary>高级操作(使用代码处理内容)</summary>
         <details>
@@ -1210,7 +1215,7 @@ const htmls = `
 
     </div>
     <footer>
-      <p>Made With &hearts; By <a href="https://github.com/Script-Hub-Org/Script-Hub">Script Hub v1.14.10</a></p>
+      <p>Made With &hearts; By <a href="https://github.com/Script-Hub-Org/Script-Hub">Script Hub v1.14.12</a></p>
     </footer>
     <script>
       const openAllDetails = () => document.querySelectorAll('details').forEach(i => i.setAttribute('open', ""))
@@ -1226,6 +1231,7 @@ const htmls = `
     targets: [{value: 'surge-module', label: 'Surge 模块', suffix: '.sgmodule'}, {value: 'stash-stoverride', label: 'Stash 覆写', suffix: '.stoverride'}, {value: 'shadowrocket-module', label: 'Shadowrocket 模块', suffix: '.sgmodule'}, {value: 'loon-plugin', label: 'Loon 插件', suffix: '.plugin'}, {value: 'loon-rule-set', label: '规则集(Loon)', suffix: '.list' }, {value: 'shadowrocket-rule-set', label: '规则集(Shadowrocket)', suffix: '.list' }, {value: 'surge-rule-set', label: '规则集(Surge)', suffix: '.list' }, {value: 'surge-domain-set', label: '域名集¹(Surge)', suffix: '.list' }, {value: 'surge-domain-set2', label: '无法转换为域名集¹的剩余规则集(Surge)', suffix: '.list' }, {value: 'stash-rule-set', label: '规则集(Stash)', suffix: '.list' }, {value: 'stash-domain-set', label: '域名集²(Stash)', suffix: '.list' }, {value: 'stash-domain-set2', label: '无法转换为域名集²的剩余规则集(Stash)', suffix: '.list' }, {value: 'surge-script', label: 'Surge 脚本(兼容)', suffix: '.js'}, {value: 'plain-text', label: '纯文本'}],
     target: '',
     src: '',
+    headers: '',
     localtext: '',
     n: '',
     filename: '',
@@ -1286,7 +1292,7 @@ const htmls = `
     init.target = 'shadowrocket-module'
   }
 
-  const params = [ 'n', 'type', 'target', 'x', 'y', 'hnadd', 'hndel', 'hnregdel', 'jsc', 'jsc2', 'cron', 'cronexp', 'njsname', 'njsnametarget', 'timeoutt', 'timeoutv', 'enginet', 'enginev', 'policy', 'arg', 'argv', 'tiles', 'tcolor', 'cachexp', 'nocache', 'del', 'nore', 'synMitm', 'noNtf', 'wrap_response', 'compatibilityOnly', 'evalScriptori', 'evalScriptmodi', 'evalUrlmodi', 'evalUrlori', 'keepHeader', 'jsDelivr', 'sni', 'localtext', 'icon', 'category']
+  const params = [ 'headers', 'n', 'type', 'target', 'x', 'y', 'hnadd', 'hndel', 'hnregdel', 'jsc', 'jsc2', 'cron', 'cronexp', 'njsname', 'njsnametarget', 'timeoutt', 'timeoutv', 'enginet', 'enginev', 'policy', 'arg', 'argv', 'tiles', 'tcolor', 'cachexp', 'nocache', 'del', 'nore', 'synMitm', 'noNtf', 'wrap_response', 'compatibilityOnly', 'evalScriptori', 'evalScriptmodi', 'evalUrlmodi', 'evalUrlori', 'keepHeader', 'jsDelivr', 'sni', 'localtext', 'icon', 'category']
   
   init.editMode = location.pathname.indexOf('/edit') === 0
 
@@ -1470,7 +1476,7 @@ const htmls = `
       },
       result: function () {
         if (this.src && this.src.startsWith('https://quantumult.app/x/open-app/add-resource')) {
-          return '⚠️⚠️⚠️ 你填入的是 QX 一键导入链接. 请安装 https://t.me/h5683577/211 然后在浏览器中预览资源 分别转换规则集和重写'
+          return '⚠️⚠️⚠️ 你填入的是 QX 导入链接. 请安装 https://t.me/h5683577/211 然后在浏览器中预览资源 分别转换规则集和重写'
         }
 				const fields = {}
         if (this.jsc_all) {
@@ -1510,7 +1516,7 @@ const htmls = `
             filename = 'untitled-' + Date.now()
           }
 
-          return this.baseUrl + pathType + '/_start_/' + src.replace(/#.*$/, '') + '/_end_/' + encodeURIComponent(filename) + suffix + '?' + Object.keys(fields).map(i => i + '=' + encodeURIComponent(fields[i])).join('&')
+          return this.baseUrl + pathType + '/_start_/' + src.replace(/#.*$/, '').replace(/😂/g, '%F0%9F%98%82') + '/_end_/' + encodeURIComponent(filename) + suffix + '?' + Object.keys(fields).map(i => i + '=' + encodeURIComponent(fields[i])).join('&')
 
           // let url = new URL(this.baseUrl + pathType + '/_start_/' + src + '/_end_/' + encodeURIComponent(filename) + suffix)
           
