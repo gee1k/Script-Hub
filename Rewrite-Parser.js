@@ -749,7 +749,7 @@ if (binaryInfo != null && binaryInfo.length > 0) {
 
   jsBox = jsBox.reduce((curr, next) => {
     /*判断对象中是否已经有该属性  没有的话 push 到 curr数组*/
-    obj[next.jstype + next.jsptn + next.jsurl] ? '' : (obj[next.jstype + next.jsptn + next.jsurl] = curr.push(next))
+    obj[next.jstype + next.jsptn + next.jsurl + next.jsarg] ? '' : (obj[next.jstype + next.jsptn + next.jsurl + next.jsarg] = curr.push(next))
     return curr
   }, [])
 
@@ -1014,9 +1014,9 @@ if (binaryInfo != null && binaryInfo.length > 0) {
     noteK = mockBox[i].noteK ? '#' : ''
     mark = mockBox[i].mark ? mockBox[i].mark : ''
     mockptn = mockBox[i].mockptn
-    mockurl = mockBox[i].mockurl ? ' data="' + mockBox[i].mockurl + '"' : ''
-    mockstatus = mockBox[i].mockstatus ? ' status-code=' + mockBox[i].mockstatus : ''
     mocktype = mockBox[i].mocktype ? ' data-type=' + mockBox[i].mocktype : ''
+    mockurl = mockBox[i].mockurl ? ' data="' + mockBox[i].mockurl + '"' : mocktype == ' data-type=text' ? ' data=""' : ''
+    mockstatus = mockBox[i].mockstatus ? ' status-code=' + mockBox[i].mockstatus : ''
 
     switch (targetApp) {
       case 'surge-module':
@@ -1711,7 +1711,7 @@ function getMockInfo(x, mark, y) {
       .split(/\s+/)[0]
       .replace(/^#/g, '')
       .replace(/^"(.+)"$/, '$1')
-    mockurl = getJsInfo(x, /\s+data\s*=\s*/).replace(/^"(.+)"$/, '$1')
+    mockurl = getJsInfo(x, /\s+data\s*=\s*/).replace(/^"(.*)"$/, '$1')
     mocktype = getJsInfo(x, /\s+data-type\s*=\s*/) || 'file'
     mockstatus = getJsInfo(x, /\s+status-code\s*=\s*/)
     mockheader = getJsInfo(x, /\s+header\s*=\s*/).replace(/^"(.+)"$/, '$1')
