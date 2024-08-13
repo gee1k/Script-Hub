@@ -800,7 +800,15 @@ if (binaryInfo != null && binaryInfo.length > 0) {
 
       for (let key in modInfoObj) {
         if (modInfoObj[key]) {
-          let info = !isStashiOS ? '#!' + key + '=' + modInfoObj[key] : key + ': |-\n  ' + modInfoObj[key]
+          let value = modInfoObj[key]
+          if (isSurgeiOS && key == 'system') {
+            value = { iOS: 'ios', iPadOS: 'ios', tvOS: 'ios', macOS: 'mac' } [value] || value
+          } else if (isLooniOS && key == 'category') {
+            key = 'keyword'
+          } else if (!isLooniOS && key == 'keyword') {
+            key = 'category'
+          }
+          let info = !isStashiOS ? '#!' + key + '=' + value : key + ': |-\n  ' + value
           modInfo.push(info)
         }
       }
@@ -871,11 +879,13 @@ if (binaryInfo != null && binaryInfo.length > 0) {
     } else if (/^(?:domain-set|rule-set)$/i.test(ruletype) && (isSurgeiOS || isShadowrocket)) {
       rules.push(mark + noteK + ruletype + ',' + rulevalue + ',' + rulepolicy + rulenore + rulesni)
     } else if (
-      /^(?:domain(-suffix|-keyword)?|ip(-asn|-cidr6?)|user-agent|url-regex|de?st-port|and|or|not)$/i.test(ruletype) &&
+      /^(?:domain(-suffix|-keyword)?|ip(-asn|-cidr6?)|user-agent|url-regex|de?st-port)$/i.test(ruletype) &&
       !isStashiOS
     ) {
       rulevalue = /,/.test(rulevalue) && !/[()]/.test(rulevalue) ? '"' + rulevalue + '"' : rulevalue
       rules.push(mark + noteK + ruletype + ',' + rulevalue + ',' + rulepolicy + rulenore + rulesni)
+    } else if (/^(?:and|or|not)$/i.test(ruletype) && !isStashiOS) {
+      rules.push(ori)
     } else if (/(?:^domain$|domain-suffix|domain-keyword|ip-|de?st-port)/i.test(ruletype) && isStashiOS) {
       rules.push(mark + noteK2 + '- ' + ruletype + ',' + rulevalue + ',' + rulepolicy + rulenore)
     } else if (/src-port/i.test(ruletype) && (isSurgeiOS || isLooniOS)) {
@@ -1528,7 +1538,7 @@ function getInputInfo(x, box) {
 //名字简介解析
 function getModInfo(x) {
   const regex = /^#!\s*([^\s]+?)\s*=\s*(.+)/
-  let key = x.match(regex)[1]
+  let key = x.match(regex)[1] == 'keyword' ? 'category' : x.match(regex)[1]
   let value = x.match(regex)[2]
   modInfoObj[key] = value
 }
